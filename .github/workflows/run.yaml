@@ -1,7 +1,7 @@
 name: hcheck-cron
 on:
     schedule:
-        - cron:  '*/17 * * * *'
+        - cron:  '*/2 * * * *'
 
 jobs:
     hcheck:

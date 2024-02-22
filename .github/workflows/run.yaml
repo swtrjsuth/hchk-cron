@@ -1,7 +1,7 @@
 name: hcheck-cron
 on:
   schedule:
-    - cron:  '9,24,39,54 * * * *'
+  - cron:  '9,24,39,54 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -13,6 +13,6 @@ jobs:
 
       - name: Run main Python script
         env:
-          TESTVAR: vMWMceGU3v
+          HCHECK_API_KEY: ${{ secrets.HCHECK_API_KEY }}
         run: python3 ./main.py
 

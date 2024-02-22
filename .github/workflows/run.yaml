@@ -1,12 +1,14 @@
+name: hcheck-cron
+on:
+    schedule:
+    - cron:  '*/17 * * * *'
+
 jobs:
-    run-job:
-    runs-on: ubuntu-latest
-    on:
-        schedule:
-        - cron:  '*/17 * * * *'
-    steps:
-        - name: Check out the repository to the runner
-        uses: actions/checkout@v4
-        - name: Run main Python script
-        run: python3 ./main.py
+    hcheck:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out the repository to the runner
+            uses: actions/checkout@v4
+            - name: Run main Python script
+            run: python3 ./main.py
 

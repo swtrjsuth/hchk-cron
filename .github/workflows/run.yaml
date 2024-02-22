@@ -1,17 +1,17 @@
 name: hcheck-cron
 on:
-    schedule:
-        - cron:  '9,24,39,54 * * * *'
+  schedule:
+    - cron:  '9,24,39,54 * * * *'
 
 jobs:
-    hcheck:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v2
+  hcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v2
 
-            - name: Run main Python script
-              env:
-                TESTVAR: vMWMceGU3v
-              run: python3 ./main.py
+      - name: Run main Python script
+        env:
+          TESTVAR: vMWMceGU3v
+        run: python3 ./main.py
 

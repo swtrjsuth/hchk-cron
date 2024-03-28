@@ -3,23 +3,45 @@ import json
 import os
 import subprocess
 import datetime
+import time
+import base64
 
-'''
-HCHECK_API_URL=https://healthcheckserver:1234
-HCHECK_API_KEY=12345678-1234-abcd-efff-816544e29bc0
-NOTIFY_URL=https://notificationserver:8080/topicname
-'''
 
+ENV_HCHECK_LOGIN_URL = os.getenv('HCHECK_LOGIN_URL')
+ENV_HCHECK_LOGIN_USER = os.getenv('HCHECK_LOGIN_USER')
+ENV_HCHECK_LOGIN_PASS = os.getenv('HCHECK_LOGIN_PASS')
 ENV_HCHECK_API_URL = os.getenv('HCHECK_API_URL')
-ENV_HCHECK_API_KEY = os.getenv('HCHECK_API_KEY')
 ENV_NOTIFY_URL = os.getenv('NOTIFY_URL')
+ENV_WORKLOAD_LABELS_B64 = os.getenv('WORKLOAD_LABELS_B64')
 
 try:
+    workloadLabels = {}
+    if ENV_WORKLOAD_LABELS_B64:
+        try:
+            wllabelsjson = base64.b64decode(test).decode('utf-8')
+            workloadLabels = json.loads(wllabelsjson)
+        except:
+            pass
+
+    # login
+    payload = json.dumps({"returnSecureToken":True, "email":ENV_HCHECK_LOGIN_USER, "password":ENV_HCHECK_LOGIN_PASS})
+    request = urllib.request.Request(
+        ENV_HCHECK_LOGIN_URL,
+        headers={'Content-Type':'application/json'},
+        data=payload.encode('utf-8'),
+        method="POST"
+        )
+    response = urllib.request.urlopen(request)
+    response_text = response.read().decode('utf8')
+
+    authdata = json.loads(response_text)
+
+    idtoken = authdata["idToken"]
+
     # get healthcheck status
 
     request = urllib.request.Request(
-        f'{ENV_HCHECK_API_URL}/status',
-        headers={'Authorization':f'token {ENV_HCHECK_API_KEY}', 'Content-Type':'application/json'},
+        f'{ENV_HCHECK_API_URL}/workloads.json?auth={idtoken}',
         method="GET"
         )
     response = urllib.request.urlopen(request)
@@ -44,7 +66,7 @@ try:
         e_title = e.get('title')
         e_message = e.get('message')
         if e_title and e_message:
-            wlid = e_message[1:37]
+            wlid = e_message.split(' ')[0]
             ntime = int(e.get('time'))
             existing_time = 0
             if e_title.startswith('OFFLINE '):
@@ -63,15 +85,24 @@ try:
     pending_notifications = []
 
     # calculate online/offline statuses for hb servers
-    tnow = int(hb_status_data['tnow'])
-    workloads = hb_status_data['workloads']
-    for workload in workloads:
-        if workload.get('muted'):
+    tnow = int(time.time())
+    workloads = hb_status_data
+    for workloadID in workloads:
+        workload = workloads.get(workloadID)
+        if workload is None:
             continue
-        wlid = workload['workload_id']
-        wlabel = workload['label']
-        last_hb_time = int(workload['last_hb_time'])
-        expect_every_secs = int(workload['expect_every']) * 60
+        muted = workload.get('m')
+        if muted is not None and (muted == True or muted.lower() == 'true'):
+            continue
+        wlid = workloadID
+        wlabel = workloadLabels.get(wlid)
+        if wlabel is None:
+            wlabel = workloadID
+        tval = workload.get('t')
+        if tval is None:
+            continue
+        last_hb_time = int(tval)
+        expect_every_secs = int(workload['e']) * 60
         date_time = datetime.datetime.fromtimestamp( last_hb_time )
         off_n = offline_notifications.get(wlid)
         if last_hb_time + expect_every_secs < tnow:

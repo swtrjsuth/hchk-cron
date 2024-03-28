@@ -14,7 +14,10 @@ jobs:
       - name: Run main Python script
         env:
           HCHECK_API_URL: ${{ secrets.HCHECK_API_URL }}
-          HCHECK_API_KEY: ${{ secrets.HCHECK_API_KEY }}
+          HCHECK_LOGIN_URL: ${{ secrets.HCHECK_LOGIN_URL }}
+          HCHECK_LOGIN_USER: ${{ secrets.HCHECK_LOGIN_USER }}
+          HCHECK_LOGIN_PASS: ${{ secrets.HCHECK_LOGIN_PASS }}
+          WORKLOAD_LABELS_B64: ${{ secrets.WORKLOAD_LABELS_B64 }}
           NOTIFY_URL: ${{ secrets.NOTIFY_URL }}
         run: python3 ./main.py
 

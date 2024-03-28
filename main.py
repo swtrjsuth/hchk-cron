@@ -5,7 +5,7 @@ import subprocess
 import datetime
 import time
 import base64
-
+import traceback
 
 ENV_HCHECK_LOGIN_URL = os.getenv('HCHECK_LOGIN_URL')
 ENV_HCHECK_LOGIN_USER = os.getenv('HCHECK_LOGIN_USER')
@@ -18,9 +18,10 @@ try:
     workloadLabels = {}
     if ENV_WORKLOAD_LABELS_B64:
         try:
-            wllabelsjson = base64.b64decode(test).decode('utf-8')
+            wllabelsjson = base64.b64decode(ENV_WORKLOAD_LABELS_B64).decode('utf-8')
             workloadLabels = json.loads(wllabelsjson)
-        except:
+        except Exception as e:
+            print('failed to parse ENV_WORKLOAD_LABELS_B64')
             pass
 
     # login
@@ -39,7 +40,6 @@ try:
     idtoken = authdata["idToken"]
 
     # get healthcheck status
-
     request = urllib.request.Request(
         f'{ENV_HCHECK_API_URL}/workloads.json?auth={idtoken}',
         method="GET"
@@ -66,7 +66,7 @@ try:
         e_title = e.get('title')
         e_message = e.get('message')
         if e_title and e_message:
-            wlid = e_message.split(' ')[0]
+            wlid = e_message.split(' ')[0].strip('[]')
             ntime = int(e.get('time'))
             existing_time = 0
             if e_title.startswith('OFFLINE '):
@@ -116,7 +116,7 @@ try:
                 pending_notifications.append({'type':'online','wlid':wlid,'wlabel':wlabel,'last':f'{date_time} UTC'})
 
     for n in pending_notifications:
-        payload = f'[{n["wlid"]}] is {n["type"]} as of {n["last"]})'
+        payload = f'[{n["wlid"]}] is {n["type"]} as of {n["last"]}'
         tag = 'warning' if n["type"] == 'offline' else 'heavy_check_mark'
         request = urllib.request.Request(
             ENV_NOTIFY_URL,
@@ -129,5 +129,8 @@ try:
     print(f'Sent {len(pending_notifications)} Notifications')
 
 except Exception as e:
-    print(e)
+    etype = type(e)
+    tb = traceback.format_exc()
+    loc = tb.split('\n')[1].strip()
+    print(f'{etype}, {loc}')
     exit(1)

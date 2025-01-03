@@ -1,7 +1,7 @@
 name: hcheck-cron
 on:
   schedule:
-  - cron:  '9,24,39,54 * * * *'
+  - cron:  '10,25,40,55 * * * *'
   workflow_dispatch:
 
 jobs:
